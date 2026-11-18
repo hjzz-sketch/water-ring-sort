@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#dceee4">
+  <title>水中套圈</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #dceee4; }
+    body { font-family: system-ui, sans-serif; color: #294b42; }
+    #game { position: fixed; inset: 0; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+    #unity-canvas { display: block; width: 100%; height: 100%; background: #dceee4; outline: none; touch-action: none; -webkit-tap-highlight-color: transparent; }
+    #loading { position: fixed; inset: 0; display: grid; align-content: center; justify-items: center; gap: 14px; padding: 28px; background: #dceee4; text-align: center; }
+    #loading h1 { font-size: 26px; font-weight: 600; margin: 0; }
+    #loading p { margin: 0; font-size: 15px; line-height: 1.7; }
+    progress { width: min(240px, 70vw); height: 9px; border: none; accent-color: #4b9d8b; }
+    #error { color: #8b493f; max-width: 38em; overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <main id="game">
+    <canvas id="unity-canvas" width="720" height="1000" tabindex="0" aria-label="水中套圈游戏"></canvas>
+  </main>
+  <div id="loading" role="status" aria-live="polite">
+    <h1>水中套圈</h1>
+    <p id="message">正在准备水中的小世界…</p>
+    <progress id="progress" max="1" value="0" aria-label="加载进度"></progress>
+    <p id="error" hidden></p>
+  </div>
+  <script>
+    const canvas = document.getElementById('unity-canvas');
+    const loading = document.getElementById('loading');
+    const progress = document.getElementById('progress');
+    function showError(message) {
+      loading.hidden = false;
+      loading.style.display = 'grid';
+      document.getElementById('message').textContent = '暂时无法打开游戏，请刷新后再试。';
+      const error = document.getElementById('error');
+      error.hidden = false;
+      error.textContent = String(message);
+      progress.hidden = true;
+    }
+    canvas.addEventListener('contextmenu', event => event.preventDefault());
+    canvas.addEventListener('touchmove', event => event.preventDefault(), { passive: false });
+    canvas.addEventListener('pointerdown', () => canvas.focus({ preventScroll: true }));
+    const config = {
+      dataUrl: 'Build/80c28f155172f76d8f15d3528f32c8aa.data',
+      frameworkUrl: 'Build/2401c1675b4d16fd4ad85d68c6d0ca60.framework.js',
+      codeUrl: 'Build/0a5690341c0571cd61e2766060c009a9.wasm',
+      streamingAssetsUrl: 'StreamingAssets',
+      companyName: "Prototype Workshop",
+      productName: "Water Loop Sort",
+      productVersion: "0.1",
+      matchWebGLToCanvasSize: true,
+      devicePixelRatio: Math.min(window.devicePixelRatio || 1, 1.5),
+      showBanner: (message, type) => { if (type === 'error') showError(message); }
+    };
+    const script = document.createElement('script');
+    script.src = 'Build/216b33d740757b84cc974d3af6d36007.loader.js';
+    script.onerror = () => showError('游戏文件加载失败。');
+    script.onload = () => createUnityInstance(canvas, config, value => {
+      progress.value = value;
+      document.getElementById('message').textContent = '正在载入… ' + Math.round(value * 100) + '%';
+    }).then(instance => {
+      window.waterRingUnity = instance;
+      loading.style.display = 'none';
+      canvas.focus({ preventScroll: true });
+    }).catch(showError);
+    document.body.appendChild(script);
+  </script>
+</body>
+</html>
